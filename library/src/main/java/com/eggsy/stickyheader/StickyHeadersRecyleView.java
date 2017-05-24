@@ -211,7 +211,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
                 // 如果是头部视图或者尾部视图是第一个可见视图，那么清除header
                 clearHeader();
             } else {
-                mIsPullUp = dy > 0 ? true : false;
+//                mIsPullUp = dy > 0 ? true : false;
                 updateOrClearHeader(getFirstVisableItemPostion());
             }
         }
@@ -408,6 +408,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
         addView(mHeader);
 
         if (mOnHeaderClickListener != null) {
+
             mHeader.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -466,11 +467,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
             mAdapter = new WrapperLinearRecycleAdapter(getContext(), adapter);
         }
 
-        if (mOnHeaderClickListener != null) {
-            mAdapter.setOnHeaderClickListener(new AdapterWrapperHeaderClickHandler());
-        } else {
-            mAdapter.setOnHeaderClickListener(null);
-        }
+        mAdapter.setOnHeaderClickListener(mOnHeaderClickListener != null ? new AdapterWrapperHeaderClickHandler() : null);
 
         mRecylerViewLinear.setAdapter(mAdapter);
         clearHeader();
@@ -481,9 +478,11 @@ public class StickyHeadersRecyleView extends FrameLayout {
 
         @Override
         public void onHeaderClick(View header, int itemPosition, long headerId) {
-            mOnHeaderClickListener.onHeaderClick(
-                    StickyHeadersRecyleView.this, header, itemPosition,
-                    headerId, false);
+            if(mOnHeaderClickListener!=null){
+                mOnHeaderClickListener.onHeaderClick(
+                        StickyHeadersRecyleView.this, header, itemPosition,
+                        headerId, false);
+            }
         }
 
     }
@@ -516,6 +515,10 @@ public class StickyHeadersRecyleView extends FrameLayout {
 
     public void setOnStickyHeaderOffsetChangedListener(OnStickyHeaderOffsetChangedListener listener) {
         mOnStickyHeaderOffsetChangedListener = listener;
+    }
+
+    public void setOnItemClickListener(OnRecyclerViewItemClickListener listener){
+        mAdapter.setOnItemClickListener(listener);
     }
 
     @Override
@@ -562,6 +565,13 @@ public class StickyHeadersRecyleView extends FrameLayout {
         void onStickyHeaderChanged(StickyHeadersRecyleView l, View header,
                                    int itemPosition, long headerId);
 
+    }
+
+    /**
+     * 主动绑定的点击事件
+     */
+    public interface OnRecyclerViewItemClickListener {
+        void onItemClick(View view, int position);
     }
 
     /**
@@ -621,5 +631,16 @@ public class StickyHeadersRecyleView extends FrameLayout {
             mHeader.layout(mPaddingLeft, headerTop, mHeader.getMeasuredWidth() - mPaddingLeft
                     , headerTop + mHeader.getMeasuredHeight());
         }
+    }
+
+    public void setAreHeadersSticky(boolean areHeadersSticky) {
+        mAreHeadersSticky = areHeadersSticky;
+        if (!areHeadersSticky) {
+            clearHeader();
+        } else {
+            updateOrClearHeader(getFirstVisableItemPostion());
+        }
+        // invalidating the list will trigger dispatchDraw()
+        mRecylerViewLinear.invalidate();
     }
 }

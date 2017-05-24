@@ -3,6 +3,8 @@ package com.eggsy.stickyrecyclerheaders;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Toast;
 
 import com.eggsy.stickyheader.StickyHeadersRecyleView;
 
@@ -41,8 +43,19 @@ public class StickyCityActivity extends AppCompatActivity {
 
     private void initView() {
         mRecyclerViewContent.setAdapter(mCityOptionAdapter);
+        mRecyclerViewContent.setOnHeaderClickListener(new StickyHeadersRecyleView.OnHeaderClickListener() {
+            @Override
+            public void onHeaderClick(StickyHeadersRecyleView l, View header, int itemPosition, long headerId, boolean currentlySticky) {
+                Toast.makeText(StickyCityActivity.this, "itemPosition " + itemPosition + " Header " + headerId + " currentlySticky ? " + currentlySticky, Toast.LENGTH_SHORT).show();
+            }
+        });
+        mRecyclerViewContent.setOnItemClickListener(new StickyHeadersRecyleView.OnRecyclerViewItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Toast.makeText(StickyCityActivity.this, "position " + position, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
-
 
 
 }

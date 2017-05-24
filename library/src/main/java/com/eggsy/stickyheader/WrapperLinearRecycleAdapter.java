@@ -11,7 +11,7 @@ import android.view.ViewGroup;
  * @author chenyongkang
  * @Date 2017/5/22 20:35
  */
-class WrapperLinearRecycleAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements StickyHeadersAdapter {
+class WrapperLinearRecycleAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements StickyHeadersAdapter, View.OnClickListener {
 
     interface OnHeaderClickListener {
         void onHeaderClick(View header, int itemPosition, long headerId);
@@ -22,6 +22,8 @@ class WrapperLinearRecycleAdapter<VH extends RecyclerView.ViewHolder> extends Re
     protected StickyRecyclerHeadersAdapter mDelegate;
 
     private OnHeaderClickListener mOnHeaderClickListener;
+
+    private StickyHeadersRecyleView.OnRecyclerViewItemClickListener mOnRecyclerViewItemClickListener;
 
     /**
      * 构造器
@@ -40,17 +42,31 @@ class WrapperLinearRecycleAdapter<VH extends RecyclerView.ViewHolder> extends Re
         WrapperLinearItemView wrapperLinearView = new WrapperLinearItemView(mContext);
         wrapperLinearView.mItemViewHolder = mDelegate.createViewHolder(parent, viewType);
         wrapperLinearView.mItem = wrapperLinearView.mItemViewHolder.itemView;
+        if (mOnRecyclerViewItemClickListener != null) {
+            wrapperLinearView.setOnClickListener(this);
+        }
         return (VH) WrapperLinearStickyHeadersViewHolder.createViewHolder(wrapperLinearView);
     }
 
     @Override
-    public void onBindViewHolder(VH holder, int position) {
+    public void onBindViewHolder(VH holder, final int position) {
+        holder.itemView.setTag(position);
+
         WrapperLinearItemView wrapperLinearView = (WrapperLinearItemView) holder.itemView;
 
         mDelegate.onBindViewHolder(wrapperLinearView.mItemViewHolder, position);
 
         if (position == 0 || mDelegate.getHeaderId(position) != mDelegate.getHeaderId(position - 1)) {
             wrapperLinearView.mHeader = mDelegate.getHeaderView(position);
+            if (mOnHeaderClickListener != null && wrapperLinearView.mHeader != null) {
+                wrapperLinearView.mHeader.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        long headerId = mDelegate.getHeaderId(position);
+                        mOnHeaderClickListener.onHeaderClick(v, position, headerId);
+                    }
+                });
+            }
         } else {
             wrapperLinearView.mHeader = null;
         }
@@ -80,5 +96,19 @@ class WrapperLinearRecycleAdapter<VH extends RecyclerView.ViewHolder> extends Re
 
     public void setOnHeaderClickListener(OnHeaderClickListener onHeaderClickListener) {
         this.mOnHeaderClickListener = onHeaderClickListener;
+    }
+
+    public void setOnItemClickListener(StickyHeadersRecyleView.OnRecyclerViewItemClickListener listener) {
+        this.mOnRecyclerViewItemClickListener = listener;
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getTag() != null) {
+            int position = (int) v.getTag();
+            if (mOnRecyclerViewItemClickListener != null) {
+                mOnRecyclerViewItemClickListener.onItemClick(v, position);
+            }
+        }
     }
 }

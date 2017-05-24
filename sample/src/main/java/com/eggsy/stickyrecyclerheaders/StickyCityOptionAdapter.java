@@ -94,7 +94,8 @@ public class StickyCityOptionAdapter extends StickyRecyclerHeadersAdapter<CityOp
 
     @Override
     public long getHeaderId(int position) {
-        return getSectionForPosition(position);
+//        return getSectionForPosition(position);
+        return mCountries[position].subSequence(0, 1).charAt(0);
     }
 
     private int[] getSectionIndices() {
