@@ -10,7 +10,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -36,6 +35,11 @@ public class StickyHeadersRecyleView extends FrameLayout {
      * 粘性头部对应的View
      */
     private View mHeader;
+
+    /**
+     * 头部的包装类，用于在RecyclerView有设置mPaddingTop的时候，并且clipToPadding为true时使用
+     */
+//    private WrapperHeaderView mWrapperHeaderView;
 
     /**
      * 当前头部对应的ID
@@ -90,12 +94,18 @@ public class StickyHeadersRecyleView extends FrameLayout {
     private int mPaddingBottom = 0;
 
     /**
+     * 滚动条样式
+     */
+    private int mScrollbarStyle;
+
+    /**
      * 触摸处理
      */
-//    private float mDownY;
-//    private boolean mHeaderOwnsTouch;
     private float mTouchSlop;
 
+    /**
+     * 是否用户向上拉取
+     */
     private boolean mIsPullUp;
 
     /**
@@ -107,13 +117,11 @@ public class StickyHeadersRecyleView extends FrameLayout {
     //    private AdapterWrapperDataSetObserver mDataSetObserver;
 
     public StickyHeadersRecyleView(@NonNull Context context) {
-        super(context);
-        init(context, null);
+        this(context, null);
     }
 
     public StickyHeadersRecyleView(@NonNull Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
-        init(context, attrs);
+        this(context, attrs, 0);
     }
 
     public StickyHeadersRecyleView(@NonNull Context context, @Nullable AttributeSet attrs, @AttrRes int defStyleAttr) {
@@ -144,8 +152,19 @@ public class StickyHeadersRecyleView extends FrameLayout {
                     super.setClipToPadding(true);
                     mRecylerViewLinear.setClipToPadding(mClippingToPadding);
 
+                    mScrollbarStyle = a.getInt(R.styleable.StickyHeadersRecyleView_android_scrollbarStyle, View.SCROLLBARS_OUTSIDE_OVERLAY);
+                    if (mScrollbarStyle == View.SCROLLBARS_INSIDE_INSET) {
+                        mRecylerViewLinear.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
+                    } else if (mScrollbarStyle == View.SCROLLBARS_INSIDE_OVERLAY) {
+                        mRecylerViewLinear.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+                    } else if (mScrollbarStyle == View.SCROLLBARS_OUTSIDE_INSET) {
+                        mRecylerViewLinear.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_INSET);
+                    } else if (mScrollbarStyle == View.SCROLLBARS_OUTSIDE_OVERLAY) {
+                        mRecylerViewLinear.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
+                    }
+
                     // 滚动条
-                    final int scrollBars = a.getInt(R.styleable.StickyHeadersRecyleView_android_scrollbars, 0x00000200);
+                    final int scrollBars = a.getInt(R.styleable.StickyHeadersRecyleView_android_scrollbars, 0x00000000);
                     mRecylerViewLinear.setVerticalScrollBarEnabled((scrollBars & 0x00000200) != 0);
                     mRecylerViewLinear.setHorizontalScrollBarEnabled((scrollBars & 0x00000100) != 0);
 
@@ -168,7 +187,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
         }
 
         LinearLayoutManager manager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-        manager.setSmoothScrollbarEnabled(false);
+//        manager.setSmoothScrollbarEnabled(false);
         setLayoutManager(manager);
     }
 
@@ -241,6 +260,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
 
         // 设置header的位置是否需要滚动
         int headerOffset = stickyHeaderTop();
+
         View view = mRecylerViewLinear.getLayoutManager().findViewByPosition(headerPosition);
 
         if (view == null) {
@@ -252,30 +272,28 @@ public class StickyHeadersRecyleView extends FrameLayout {
             int firstVisablePosition = getFirstVisableItemPostion();
             int lastVisablePosition = getLastVisableItemPostion();
 
-            Log.d(TAG, "first visable position : " + firstVisablePosition + " , " + "last visable position : " + lastVisablePosition);
-
             // 遍历当前页面，找到下一个拥有header的item位置
             if (firstVisablePosition >= 0 && lastVisablePosition >= 0) {
                 for (int index = firstVisablePosition; index <= lastVisablePosition; index++) {
                     View findItemView = mRecylerViewLinear.getLayoutManager().findViewByPosition(index);
                     if (findItemView instanceof WrapperLinearItemView) {
-//                        Log.d(TAG, "find item view position : " + index);
                         if (headerPosition > 0 && findItemView.getTop() >= 0 && findItemView.getTop() <= (stickyHeaderTop() + getHeaderMeasuredHeight())
                                 && ((WrapperLinearItemView) findItemView).hasHeader()) {
-                            Log.d(TAG, "find item view Top : " + findItemView.getTop() + " , measured height : " + getHeaderMeasuredHeight());
+//                            Log.d(TAG, "find item view Top : " + findItemView.getTop() + " , measured height : " + getHeaderMeasuredHeight());
                             headerOffset = Math.min(findItemView.getTop() - getHeaderMeasuredHeight(), headerOffset);
+                            break;
+                        } else if (headerPosition == 0) { // && mPaddingTop > 0 && !mClippingToPadding
+                            if (findItemView.getTop() > stickyHeaderTop()) {
+//                                Log.d(TAG, "find item view Top : " + findItemView.getTop() +
+//                                        " , stick header top : " + stickyHeaderTop() + " , headerOffset : " + headerOffset + " , header is valid : " + (mHeader!=null));
+                                clearHeader();
+                            }
+                            break;
                         }
                     }
                 }
 
-                Log.d(TAG, "headerOffset : " + headerOffset +" , isPullUp : "+mIsPullUp);
                 setHeaderOffet(headerOffset);
-
-//                if(firstVisablePosition == 0 && !mIsPullUp){
-//                    clearHeader();
-//                }else{
-//
-//                }
             }
 
             updateHeaderVisibilities();
@@ -310,6 +328,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
                     childHeader.setVisibility(View.VISIBLE);
                 }
             }
+            break;
         }
     }
 
@@ -360,16 +379,6 @@ public class StickyHeadersRecyleView extends FrameLayout {
     }
 
     /**
-     * 设置头部的偏移量
-     *
-     * @param stickyHeaderTopOffset
-     */
-    public void setStickyHeaderTopOffset(int stickyHeaderTopOffset) {
-        mStickyHeaderTopOffset = stickyHeaderTopOffset;
-        updateOrClearHeader(getFirstVisableItemPostion());
-    }
-
-    /**
      * 计算粘性头部视图距离父视图顶部距离
      * 需要根据mClippingToPadding计算是否加上paddingTop属性
      *
@@ -396,9 +405,8 @@ public class StickyHeadersRecyleView extends FrameLayout {
             removeView(mHeader);
         }
         mHeader = newHeader;
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        layoutParams.setMargins(mPaddingLeft, 0, mPaddingRight, 0);
-        addView(mHeader, layoutParams);
+        addView(mHeader);
+
         if (mOnHeaderClickListener != null) {
             mHeader.setOnClickListener(new OnClickListener() {
                 @Override
@@ -592,5 +600,26 @@ public class StickyHeadersRecyleView extends FrameLayout {
         }
         super.setPadding(0, 0, 0, 0);
         requestLayout();
+    }
+
+    /**
+     * 设置头部的偏移量
+     *
+     * @param stickyHeaderTopOffset
+     */
+    public void setStickyHeaderTopOffset(int stickyHeaderTopOffset) {
+        mStickyHeaderTopOffset = stickyHeaderTopOffset;
+        updateOrClearHeader(getFirstVisableItemPostion());
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        mRecylerViewLinear.layout(0, 0, mRecylerViewLinear.getMeasuredWidth(), getHeight());
+        if (mHeader != null) {
+            MarginLayoutParams lp = (MarginLayoutParams) mHeader.getLayoutParams();
+            int headerTop = lp.topMargin;
+            mHeader.layout(mPaddingLeft, headerTop, mHeader.getMeasuredWidth() - mPaddingLeft
+                    , headerTop + mHeader.getMeasuredHeight());
+        }
     }
 }

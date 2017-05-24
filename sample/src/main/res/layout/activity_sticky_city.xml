@@ -9,9 +9,11 @@
         android:id="@+id/recyclerview_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clipToPadding="true"
-        android:padding="0dp"
+        android:clipToPadding="false"
+        android:padding="20dp"
+        android:overScrollMode="never"
         android:scrollbars="vertical"
+        android:scrollbarStyle="insideOverlay"
         sticky:hasStickyHeaders="true">
 
     </com.eggsy.stickyheader.StickyHeadersRecyleView>
