@@ -15,4 +15,5 @@ interface StickyHeadersAdapter {
 
     long getHeaderId(int position);
 
+    void itemRemoveWithData(int position);
 }

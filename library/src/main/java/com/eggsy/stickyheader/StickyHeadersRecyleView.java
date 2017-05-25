@@ -46,7 +46,8 @@ public class StickyHeadersRecyleView extends FrameLayout {
      */
     private Long mHeaderId;
     /**
-     * 头部位置
+     * 当前可见的头部位置，如果是系统带有paddingTop
+     * 默认会识别到paddingTop下面的第一个可见位置为当前值
      */
     private Integer mHeaderPosition;
     /**
@@ -207,13 +208,13 @@ public class StickyHeadersRecyleView extends FrameLayout {
             if (mOnScrollListenerDelegate != null) {
                 mOnScrollListenerDelegate.onScrolled(recyclerView, dx, dy);
             }
-            if (dy == 0) {
-                // 如果是头部视图或者尾部视图是第一个可见视图，那么清除header
-                clearHeader();
-            } else {
-//                mIsPullUp = dy > 0 ? true : false;
-                updateOrClearHeader(getFirstVisableItemPostion());
-            }
+//            if (dy == 0) {
+//                // 如果是头部视图或者尾部视图是第一个可见视图，那么清除header
+//                clearHeader();
+//            } else {
+            mIsPullUp = dy > 0 ? true : false;
+            updateOrClearHeader(getFirstVisableItemPostion());
+//            }
         }
     }
 
@@ -235,11 +236,14 @@ public class StickyHeadersRecyleView extends FrameLayout {
      * @param adapter        适配器
      */
     private void updateHeader(int headerPosition, StickyRecyclerHeadersAdapter adapter) {
+//        Log.d(TAG, "translation Y " + (mHeader != null ? mHeader.getTranslationY() : "null"));
+
         // 检查是否有新的标题
         if (mHeaderPosition == null || mHeaderPosition != headerPosition) {
             mHeaderPosition = headerPosition;
+//            View firstVisableItemView = mRecylerViewLinear.getLayoutManager().findViewByPosition(headerPosition);
             final long headerId = adapter.getHeaderId(headerPosition);
-            if (mHeaderId == null || mHeaderId != headerId) {
+            if ((mHeaderId == null || mHeaderId != headerId)) {
                 mHeaderId = headerId;
 
                 View newHeaderView = adapter.getHeaderView(headerPosition);
@@ -250,11 +254,12 @@ public class StickyHeadersRecyleView extends FrameLayout {
                     swapHeader(newHeaderView);
                 }
             }
-
-            ensureHeaderHasCorrectLayoutParams(mHeader);
-            measureHeader(mHeader);
-            if (mOnStickyHeaderChangedListener != null) {
-                mOnStickyHeaderChangedListener.onStickyHeaderChanged(this, mHeader, headerPosition, mHeaderId);
+            if (mHeader != null) {
+                ensureHeaderHasCorrectLayoutParams(mHeader);
+                measureHeader(mHeader);
+                if (mOnStickyHeaderChangedListener != null) {
+                    mOnStickyHeaderChangedListener.onStickyHeaderChanged(this, mHeader, headerPosition, mHeaderId);
+                }
             }
         }
 
@@ -274,25 +279,23 @@ public class StickyHeadersRecyleView extends FrameLayout {
 
             // 遍历当前页面，找到下一个拥有header的item位置
             if (firstVisablePosition >= 0 && lastVisablePosition >= 0) {
+//                Log.d(TAG, "firstVisablePosition " + firstVisablePosition + " , lastVisablePosition " + lastVisablePosition);
                 for (int index = firstVisablePosition; index <= lastVisablePosition; index++) {
                     View findItemView = mRecylerViewLinear.getLayoutManager().findViewByPosition(index);
                     if (findItemView instanceof WrapperLinearItemView) {
                         if (headerPosition > 0 && findItemView.getTop() >= 0 && findItemView.getTop() <= (stickyHeaderTop() + getHeaderMeasuredHeight())
                                 && ((WrapperLinearItemView) findItemView).hasHeader()) {
-//                            Log.d(TAG, "find item view Top : " + findItemView.getTop() + " , measured height : " + getHeaderMeasuredHeight());
                             headerOffset = Math.min(findItemView.getTop() - getHeaderMeasuredHeight(), headerOffset);
                             break;
-                        } else if (headerPosition == 0) { // && mPaddingTop > 0 && !mClippingToPadding
+                        } else if (headerPosition == 0) {
                             if (findItemView.getTop() > stickyHeaderTop()) {
-//                                Log.d(TAG, "find item view Top : " + findItemView.getTop() +
-//                                        " , stick header top : " + stickyHeaderTop() + " , headerOffset : " + headerOffset + " , header is valid : " + (mHeader!=null));
                                 clearHeader();
                             }
                             break;
                         }
                     }
                 }
-
+//                Log.d(TAG, "headerOffset " + headerOffset);
                 setHeaderOffet(headerOffset);
             }
 
@@ -332,7 +335,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
         }
     }
 
-    /*
+    /**
      * 根据不同版本的API，设置不同方式的偏移量方法
      */
     @SuppressLint("NewApi")
@@ -478,7 +481,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
 
         @Override
         public void onHeaderClick(View header, int itemPosition, long headerId) {
-            if(mOnHeaderClickListener!=null){
+            if (mOnHeaderClickListener != null) {
                 mOnHeaderClickListener.onHeaderClick(
                         StickyHeadersRecyleView.this, header, itemPosition,
                         headerId, false);
@@ -517,7 +520,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
         mOnStickyHeaderOffsetChangedListener = listener;
     }
 
-    public void setOnItemClickListener(OnRecyclerViewItemClickListener listener){
+    public void setOnItemClickListener(OnRecyclerViewItemClickListener listener) {
         mAdapter.setOnItemClickListener(listener);
     }
 
@@ -533,6 +536,96 @@ public class StickyHeadersRecyleView extends FrameLayout {
         } else {
             mRecylerViewLinear.setOnTouchListener(null);
         }
+    }
+
+    public void setLayoutManager(RecyclerView.LayoutManager layoutManager) {
+        mRecylerViewLinear.setLayoutManager(layoutManager);
+    }
+
+    public void addItemDecoration(RecyclerView.ItemDecoration itemDecoration) {
+        mRecylerViewLinear.addItemDecoration(itemDecoration);
+    }
+
+    @Override
+    public void setPadding(int left, int top, int right, int bottom) {
+        mPaddingLeft = left;
+        mPaddingTop = top;
+        mPaddingRight = right;
+        mPaddingBottom = bottom;
+
+        if (mRecylerViewLinear != null) {
+            mRecylerViewLinear.setPadding(left, top, right, bottom);
+        }
+        super.setPadding(0, 0, 0, 0);
+        requestLayout();
+    }
+
+    @Override
+    public void setClipToPadding(boolean clipToPadding) {
+        if (mRecylerViewLinear != null) {
+            mRecylerViewLinear.setClipToPadding(clipToPadding);
+        }
+        mClippingToPadding = clipToPadding;
+    }
+
+    /**
+     * 设置头部的偏移量
+     *
+     * @param stickyHeaderTopOffset
+     */
+    public void setStickyHeaderTopOffset(int stickyHeaderTopOffset) {
+        mStickyHeaderTopOffset = stickyHeaderTopOffset;
+        updateOrClearHeader(getFirstVisableItemPostion());
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        mRecylerViewLinear.layout(0, 0, mRecylerViewLinear.getMeasuredWidth(), getHeight());
+        if (mHeader != null) {
+            MarginLayoutParams lp = (MarginLayoutParams) mHeader.getLayoutParams();
+            int headerTop = lp.topMargin;
+            mHeader.layout(mPaddingLeft, headerTop, mHeader.getMeasuredWidth() - mPaddingLeft
+                    , headerTop + mHeader.getMeasuredHeight());
+        }
+    }
+
+    /**
+     * 设置是否启用粘性头部
+     *
+     * @param areHeadersSticky
+     */
+    public void setAreHeadersSticky(boolean areHeadersSticky) {
+        mAreHeadersSticky = areHeadersSticky;
+        if (!areHeadersSticky) {
+            clearHeader();
+        } else {
+            updateOrClearHeader(getFirstVisableItemPostion());
+        }
+        mRecylerViewLinear.invalidate();
+    }
+
+    public void removeItem(int position) {
+        RecyclerView.ViewHolder holder = mRecylerViewLinear.findViewHolderForLayoutPosition(position);
+        boolean positionHasHeader = false;
+        WrapperLinearItemView wrapperLinearView = null;
+//        holder.get
+        if (holder != null && holder.itemView instanceof WrapperLinearItemView) {
+            wrapperLinearView = (WrapperLinearItemView) holder.itemView;
+            if (wrapperLinearView != null && wrapperLinearView.hasHeader()) {
+                positionHasHeader = true;
+            }
+        }
+        // 删除数据和界面上的item
+        mAdapter.itemRemoveWithData(position);
+
+        // 刷新数据
+        if (positionHasHeader) {
+            mAdapter.notifyItemChanged(position);
+        }
+        /**
+         * 用于滑动到底部时，进行删除操作，需要刷新头部的显示与否
+         */
+        updateOrClearHeader(getFirstVisableItemPostion());
     }
 
     /**
@@ -590,57 +683,15 @@ public class StickyHeadersRecyleView extends FrameLayout {
         void onStickyHeaderOffsetChanged(StickyHeadersRecyleView l, View header, int offset);
     }
 
-    public void setLayoutManager(RecyclerView.LayoutManager layoutManager) {
-        mRecylerViewLinear.setLayoutManager(layoutManager);
-    }
-
-    public void addItemDecoration(RecyclerView.ItemDecoration itemDecoration) {
-        mRecylerViewLinear.addItemDecoration(itemDecoration);
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        super.dispatchTouchEvent(ev);
+        return mRecylerViewLinear.dispatchTouchEvent(ev);
     }
 
     @Override
-    public void setPadding(int left, int top, int right, int bottom) {
-        mPaddingLeft = left;
-        mPaddingTop = top;
-        mPaddingRight = right;
-        mPaddingBottom = bottom;
-
-        if (mRecylerViewLinear != null) {
-            mRecylerViewLinear.setPadding(left, top, right, bottom);
-        }
-        super.setPadding(0, 0, 0, 0);
-        requestLayout();
-    }
-
-    /**
-     * 设置头部的偏移量
-     *
-     * @param stickyHeaderTopOffset
-     */
-    public void setStickyHeaderTopOffset(int stickyHeaderTopOffset) {
-        mStickyHeaderTopOffset = stickyHeaderTopOffset;
-        updateOrClearHeader(getFirstVisableItemPostion());
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        mRecylerViewLinear.layout(0, 0, mRecylerViewLinear.getMeasuredWidth(), getHeight());
-        if (mHeader != null) {
-            MarginLayoutParams lp = (MarginLayoutParams) mHeader.getLayoutParams();
-            int headerTop = lp.topMargin;
-            mHeader.layout(mPaddingLeft, headerTop, mHeader.getMeasuredWidth() - mPaddingLeft
-                    , headerTop + mHeader.getMeasuredHeight());
-        }
-    }
-
-    public void setAreHeadersSticky(boolean areHeadersSticky) {
-        mAreHeadersSticky = areHeadersSticky;
-        if (!areHeadersSticky) {
-            clearHeader();
-        } else {
-            updateOrClearHeader(getFirstVisableItemPostion());
-        }
-        // invalidating the list will trigger dispatchDraw()
-        mRecylerViewLinear.invalidate();
+    public boolean onTouchEvent(MotionEvent event) {
+        super.dispatchTouchEvent(event);
+        return mRecylerViewLinear.onTouchEvent(event);
     }
 }

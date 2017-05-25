@@ -11,6 +11,8 @@ import android.widget.TextView;
 import com.eggsy.stickyheader.StickyRecyclerHeadersAdapter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author chenyongkang
@@ -20,6 +22,7 @@ public class StickyCityOptionAdapter extends StickyRecyclerHeadersAdapter<CityOp
 
     private final Context mContext;
     private String[] mCountries;
+    private List<String> mCountriesList;
     private LayoutInflater mInflater;
     private int[] mSectionIndices;
     private Character[] mSectionLetters;
@@ -28,6 +31,7 @@ public class StickyCityOptionAdapter extends StickyRecyclerHeadersAdapter<CityOp
         mContext = context;
         mInflater = LayoutInflater.from(context);
         mCountries = context.getResources().getStringArray(R.array.countries);
+        mCountriesList = new ArrayList<>(Arrays.asList(mCountries));
         mSectionIndices = getSectionIndices();
         mSectionLetters = getSectionLetters();
     }
@@ -38,16 +42,17 @@ public class StickyCityOptionAdapter extends StickyRecyclerHeadersAdapter<CityOp
     }
 
     public void onBindViewHolder(CityOptionViewHolder holder, int position) {
-        if (position >= 0 && position < mCountries.length && holder != null) {
-            holder.mTvCityName.setText(mCountries[position]);
+        if (position >= 0 && position < mCountriesList.size() && holder != null) {
+            holder.mTvCityName.setText(mCountriesList.get(position));
         } else {
             holder.mTvCityName.setText("");
         }
     }
 
     public int getItemCount() {
-        return mCountries.length;
+        return mCountriesList.size();
     }
+
     @Override
     public Object[] getSections() {
         return mSectionLetters;
@@ -81,30 +86,29 @@ public class StickyCityOptionAdapter extends StickyRecyclerHeadersAdapter<CityOp
     public View getHeaderView(int position) {
         View convertView = mInflater.inflate(R.layout.city_item, null, false);
 
-        CharSequence headerChar = mCountries[position].subSequence(0, 1);
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
+        CharSequence headerChar = mCountriesList.get(position).subSequence(0, 1);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             convertView.setBackgroundColor(mContext.getResources().getColor(R.color.colorAccent));
-        }else{
-            convertView.setBackgroundColor(mContext.getResources().getColor(R.color.colorAccent,null));
+        } else {
+            convertView.setBackgroundColor(mContext.getResources().getColor(R.color.colorAccent, null));
         }
-        ((TextView)convertView.findViewById(R.id.tv_city_name)).setText(headerChar);
+        ((TextView) convertView.findViewById(R.id.tv_city_name)).setText(headerChar);
 
         return convertView;
     }
 
     @Override
     public long getHeaderId(int position) {
-//        return getSectionForPosition(position);
-        return mCountries[position].subSequence(0, 1).charAt(0);
+        return mCountriesList.get(position).subSequence(0, 1).charAt(0);
     }
 
     private int[] getSectionIndices() {
         ArrayList<Integer> sectionIndices = new ArrayList<>();
-        char lastFirstChar = mCountries[0].charAt(0);
+        char lastFirstChar = mCountriesList.get(0).charAt(0);
         sectionIndices.add(0);
-        for (int i = 1; i < mCountries.length; i++) {
-            if (mCountries[i].charAt(0) != lastFirstChar) {
-                lastFirstChar = mCountries[i].charAt(0);
+        for (int i = 1; i < mCountriesList.size(); i++) {
+            if (mCountriesList.get(i).charAt(0) != lastFirstChar) {
+                lastFirstChar = mCountriesList.get(i).charAt(0);
                 sectionIndices.add(i);
             }
         }
@@ -118,8 +122,17 @@ public class StickyCityOptionAdapter extends StickyRecyclerHeadersAdapter<CityOp
     private Character[] getSectionLetters() {
         Character[] letters = new Character[mSectionIndices.length];
         for (int i = 0; i < mSectionIndices.length; i++) {
-            letters[i] = mCountries[mSectionIndices[i]].charAt(0);
+            letters[i] = mCountriesList.get(mSectionIndices[i]).charAt(0);
         }
         return letters;
+    }
+
+    @Override
+    public void itemRemoveWithData(int position) {
+        if (position >= 0 && position < mCountriesList.size()) {
+            mCountriesList.remove(position);
+            mSectionIndices = getSectionIndices();
+            mSectionLetters = getSectionLetters();
+        }
     }
 }

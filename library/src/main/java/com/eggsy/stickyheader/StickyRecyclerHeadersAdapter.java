@@ -10,8 +10,6 @@ import android.support.v7.widget.RecyclerView;
  * @author chenyongkang
  * @Date 2017/5/22 14:40
  */
-public abstract class StickyRecyclerHeadersAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements StickyHeadersAdapter{
-
-
+public abstract class StickyRecyclerHeadersAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements StickyHeadersAdapter{  // RecyclerViewItemRemove
 
 }

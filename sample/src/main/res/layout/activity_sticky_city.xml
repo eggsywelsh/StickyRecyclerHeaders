@@ -5,17 +5,55 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.eggsy.stickyheader.StickyHeadersRecyleView
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/ck_clip_padding"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="clipToPadding" />
+
+        <CheckBox
+            android:id="@+id/ck_sticky_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="sticky header" />
+
+    </LinearLayout>
+
+    <!--<com.eggsy.stickyheader.StickyHeadersRecyleView
         android:id="@+id/recyclerview_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clipToPadding="false"
-        android:padding="20dp"
         android:overScrollMode="never"
-        android:scrollbars="vertical"
+        android:padding="50dp"
         android:scrollbarStyle="insideOverlay"
-        sticky:hasStickyHeaders="true">
+        android:scrollbars="vertical"
+        sticky:hasStickyHeaders="true">-->
 
-    </com.eggsy.stickyheader.StickyHeadersRecyleView>
+    <com.yalantis.phoenix.PullToRefreshView
+        android:id="@+id/pull_to_refresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.eggsy.stickyheader.StickyHeadersRecyleView
+            android:id="@+id/recyclerview_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="true"
+            android:overScrollMode="never"
+            android:padding="0dp"
+            android:scrollbarStyle="insideOverlay"
+            android:scrollbars="vertical"
+            sticky:hasStickyHeaders="true">
+
+        </com.eggsy.stickyheader.StickyHeadersRecyleView>
+
+    </com.yalantis.phoenix.PullToRefreshView>
 
 </LinearLayout>
