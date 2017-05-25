@@ -15,6 +15,8 @@ import java.util.ArrayList;
  */
 public class WrapperLinearRecycleView extends RecyclerView {
 
+    private static final String TAG = StickyHeadersRecyleView.class.getSimpleName();
+
     ArrayList<ItemDecoration> mItemDecorations = new ArrayList<>();
 
     public WrapperLinearRecycleView(Context context) {
@@ -38,4 +40,22 @@ public class WrapperLinearRecycleView extends RecyclerView {
         }
     }
 
+//    @Override
+//    public boolean dispatchTouchEvent(MotionEvent ev) {
+//        boolean isDispatch = super.dispatchTouchEvent(ev);
+//        Log.d(TAG, "Touch[onInterceptTouchEvent][WrapperLinearRecycleView] " + isDispatch);
+//        return isDispatch;
+//    }
+
+//    @Override
+//    public boolean onInterceptTouchEvent(MotionEvent event) {
+//        boolean isIntercept = super.onInterceptTouchEvent(event);
+//        Log.d(TAG, "Touch[onInterceptTouchEvent][WrapperLinearRecycleView] " + isIntercept);
+//        return isIntercept;
+//    }
+
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        return super.dispatchTouchEvent(event);
+//    }
 }

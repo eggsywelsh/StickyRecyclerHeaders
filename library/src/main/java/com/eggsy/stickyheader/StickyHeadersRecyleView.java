@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -64,6 +65,11 @@ public class StickyHeadersRecyleView extends FrameLayout {
      * RecylerView对应的线性布局的适配器
      */
     private WrapperLinearRecycleAdapter mAdapter;
+
+    /**
+     * RecyclerView的线性布局
+     */
+    LinearLayoutManager mLinearLayoutManager;
 
     /**
      * ------ 设置 ------
@@ -176,6 +182,7 @@ public class StickyHeadersRecyleView extends FrameLayout {
 
                     // 粘性头部属性
                     mAreHeadersSticky = a.getBoolean(R.styleable.StickyHeadersRecyleView_hasStickyHeaders, true);
+
                 } finally {
                     a.recycle();
                 }
@@ -184,12 +191,12 @@ public class StickyHeadersRecyleView extends FrameLayout {
             if (mAreHeadersSticky) {
                 mRecylerViewLinear.addOnScrollListener(new WrapperRecyclerViewScrollListener());
             }
-            addView(mRecylerViewLinear);
+            addView(mRecylerViewLinear, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
 
-        LinearLayoutManager manager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
+        mLinearLayoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
 //        manager.setSmoothScrollbarEnabled(false);
-        setLayoutManager(manager);
+        mRecylerViewLinear.setLayoutManager(mLinearLayoutManager);
     }
 
     private class WrapperRecyclerViewScrollListener extends RecyclerView.OnScrollListener {
@@ -538,10 +545,6 @@ public class StickyHeadersRecyleView extends FrameLayout {
         }
     }
 
-    public void setLayoutManager(RecyclerView.LayoutManager layoutManager) {
-        mRecylerViewLinear.setLayoutManager(layoutManager);
-    }
-
     public void addItemDecoration(RecyclerView.ItemDecoration itemDecoration) {
         mRecylerViewLinear.addItemDecoration(itemDecoration);
     }
@@ -685,13 +688,58 @@ public class StickyHeadersRecyleView extends FrameLayout {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        super.dispatchTouchEvent(ev);
-        return mRecylerViewLinear.dispatchTouchEvent(ev);
+        boolean isDispatch = super.dispatchTouchEvent(ev);
+//        Log.d(TAG, "Touch[dispatchTouchEvent][StickyHeadersRecyleView] " + isDispatch);
+        return isDispatch;
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent event) {
+        boolean isIntercept = super.onInterceptTouchEvent(event);
+//        Log.d(TAG, "Touch[onInterceptTouchEvent][StickyHeadersRecyleView] " + isIntercept);
+        Log.d(TAG, "Touch[Action][StickyHeadersRecyleView] " + event.getAction());
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                if (getParent() != null) {
+                    if (mLinearLayoutManager != null && mLinearLayoutManager.findFirstCompletelyVisibleItemPosition() != 0) {
+                        if (getParent() != null) {
+                            Log.d(TAG, "Touch request disallow interceptTouchEvent ");
+                            getParent().requestDisallowInterceptTouchEvent(true);
+                        }
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+//                if (getParent() != null) {
+//                    Log.d(TAG, "Touch request disallow interceptTouchEvent ");
+//                    getParent().requestDisallowInterceptTouchEvent(true);
+//                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (mLinearLayoutManager != null && mLinearLayoutManager.findFirstCompletelyVisibleItemPosition() == 0) {
+                    if (getParent() != null) {
+                        Log.d(TAG, "Touch request cancel interceptTouchEvent ");
+                        getParent().requestDisallowInterceptTouchEvent(false);
+                    }
+                }
+                break;
+        }
+
+        return isIntercept;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        super.dispatchTouchEvent(event);
-        return mRecylerViewLinear.onTouchEvent(event);
+        boolean isTouch = super.dispatchTouchEvent(event);
+//        Log.d(TAG, "Touch[onTouchEvent][StickyHeadersRecyleView] " + isTouch);
+        return isTouch;
     }
+
+
+//    @Override
+//    public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+//        super.requestDisallowInterceptTouchEvent(disallowIntercept);
+//    }
+
 }

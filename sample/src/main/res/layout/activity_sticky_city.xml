@@ -44,7 +44,7 @@
         <com.eggsy.stickyheader.StickyHeadersRecyleView
             android:id="@+id/recyclerview_content"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:clipToPadding="true"
             android:overScrollMode="never"
             android:padding="0dp"
@@ -55,5 +55,26 @@
         </com.eggsy.stickyheader.StickyHeadersRecyleView>
 
     </com.yalantis.phoenix.PullToRefreshView>
+
+    <!--<android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/srl_root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.eggsy.stickyheader.StickyHeadersRecyleView
+            android:id="@+id/recyclerview_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="true"
+            android:overScrollMode="never"
+            android:padding="0dp"
+            android:scrollbarStyle="insideOverlay"
+            android:scrollbars="vertical"
+            sticky:hasStickyHeaders="true">
+
+        </com.eggsy.stickyheader.StickyHeadersRecyleView>
+
+    </android.support.v4.widget.SwipeRefreshLayout>-->
 
 </LinearLayout>

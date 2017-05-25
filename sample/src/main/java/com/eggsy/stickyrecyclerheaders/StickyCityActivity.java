@@ -1,6 +1,7 @@
 package com.eggsy.stickyrecyclerheaders;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -20,7 +21,7 @@ import butterknife.OnCheckedChanged;
  * @author chenyongkang
  * @Date 2017/5/22 9:03
  */
-public class StickyCityActivity extends AppCompatActivity {
+public class StickyCityActivity extends AppCompatActivity {  //implements SwipeRefreshLayout.OnRefreshListener
 
     @BindView(R.id.recyclerview_content)
     StickyHeadersRecyleView mRecyclerViewContent;
@@ -34,7 +35,12 @@ public class StickyCityActivity extends AppCompatActivity {
     @BindView(R.id.pull_to_refresh)
     PullToRefreshView mPullToRefreshView;
 
+//    @BindView(R.id.srl_root)
+//    SwipeRefreshLayout mRootLayout;
+
     private StickyCityOptionAdapter mCityOptionAdapter;
+
+    Handler mHandler = new Handler();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -77,11 +83,24 @@ public class StickyCityActivity extends AppCompatActivity {
                     public void run() {
                         mPullToRefreshView.setRefreshing(false);
                     }
-                }, 2500);
+                }, 2000);
             }
         });
 
+//        mRootLayout.setRefreshing(false);
+//        mRootLayout.setOnRefreshListener(this);
+
     }
+
+//    @Override
+//    public void onRefresh() {
+//        mHandler.postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        mRootLayout.setRefreshing(false);
+//                    }
+//                }, 2000);
+//    }
 
     @OnCheckedChanged(R.id.ck_clip_padding)
     public void clipPaddingChange(CheckBox v, boolean isCheck) {
